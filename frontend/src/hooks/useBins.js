@@ -12,3 +12,13 @@ export async function fetchBinDetails(binId) {
   const { data } = await axios.get(`${API_BASE}/bins/${binId}`);
   return data;
 }
+
+export async function seedBins() {
+  const { data } = await axios.post(`${API_BASE}/bins/seed`);
+  return data;
+}
+
+export async function generateRoute() {
+  const { data } = await axios.post(`${API_BASE}/routes/generate`);
+  return data;
+}
