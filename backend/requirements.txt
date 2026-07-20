@@ -6,6 +6,6 @@ geoalchemy2==0.15.1
 pydantic==2.7.4
 pydantic-settings==2.3.4
 ortools==9.12.4544
-scipy==1.13.1
+scipy==
 paho-mqtt==2.1.0
 python-dotenv==1.0.1
