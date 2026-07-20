@@ -1,10 +1,13 @@
 """
-Модели данных для PostgreSQL + PostGIS.
+Модели данных для PostgreSQL.
+
+Примечание: изначально координаты планировались через PostGIS (Geometry),
+но для MVP на Railway используем обычные float lat/lng — это не требует
+включения расширения PostGIS на управляемой БД и упрощает деплой.
 """
 
 from datetime import datetime
 
-from geoalchemy2 import Geometry
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -18,7 +21,8 @@ class Bin(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     address = Column(String, nullable=False)
-    location = Column(Geometry("POINT", srid=4326), nullable=False)
+    lat = Column(Float, nullable=False)
+    lng = Column(Float, nullable=False)
     fill_percent = Column(Float, default=0.0)
     battery_level = Column(Float, default=100.0)
     last_seen_at = Column(DateTime, default=datetime.utcnow)

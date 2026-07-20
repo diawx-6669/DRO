@@ -8,12 +8,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import bins, routes, drivers, analytics
 from app.core.config import settings
+from app.db.session import init_db
 
 app = FastAPI(
     title="DRO — Dispatch Route Optimizer",
     description="API диспетчерской панели для оптимизации логистики вторичного сырья",
     version="0.1.0",
 )
+
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 app.add_middleware(
     CORSMiddleware,

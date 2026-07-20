@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_BASE = "https://dro-production.up.railway.app/api";
+const API_BASE =
+  import.meta.env.VITE_API_URL || "https://dro-production.up.railway.app/api";
 
 export async function fetchBins() {
   const { data } = await axios.get(`${API_BASE}/bins/`);
