@@ -80,7 +80,9 @@ function App() {
           </div>
         </aside>
       </div>
-      {sensorCheckOpen && <SensorPanel onClose={() => setSensorCheckOpen(false)} />}
+      {sensorCheckOpen && (
+        <SensorPanel onClose={() => setSensorCheckOpen(false)} onTelemetrySent={loadBins} />
+      )}
     </div>
   );
 }

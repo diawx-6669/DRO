@@ -105,26 +105,26 @@ def reset_bin(bin_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/seed")
-def seed_test_bins(db: Session = Depends(get_db)):
+def seed_single_demo_bin(db: Session = Depends(get_db)):
     """
-    Разово наполняет БД тестовыми контейнерами вокруг Астаны для проверки карты.
-    Безопасно вызывать повторно — если баки уже есть, ничего не добавляет.
+    Очищает базу и оставляет ровно один контейнер — тот самый макет
+    с настоящим датчиком, который будет обновляться через /telemetry
+    (в том числе из окна «Проверка датчика» на сайте).
+    Безопасно вызывать повторно — просто пересоздаёт этот единственный бак.
     """
-    if db.query(Bin).count() > 0:
-        return {"status": "skipped", "reason": "bins already exist"}
-
-    test_bins = [
-        {"address": "ул. Кенесары, 42", "lat": 51.1801, "lng": 71.4460, "fill_percent": 92, "battery_level": 78},
-        {"address": "пр. Республики, 15", "lat": 51.1694, "lng": 71.4491, "fill_percent": 15, "battery_level": 95},
-        {"address": "ул. Достык, 8", "lat": 51.1284, "lng": 71.4306, "fill_percent": 65, "battery_level": 60},
-        {"address": "мкр. Тельман, 3", "lat": 51.1105, "lng": 71.4102, "fill_percent": 88, "battery_level": 40},
-        {"address": "ул. Сарыарка, 25", "lat": 51.1550, "lng": 71.4050, "fill_percent": 30, "battery_level": 88},
-        {"address": "пр. Туран, 55", "lat": 51.0967, "lng": 71.4186, "fill_percent": 55, "battery_level": 72},
-        {"address": "ул. Кабанбай батыра, 11", "lat": 51.1289, "lng": 71.4699, "fill_percent": 96, "battery_level": 25},
-        {"address": "мкр. Железнодорожный, 7", "lat": 51.1650, "lng": 71.4950, "fill_percent": 8, "battery_level": 99},
-    ]
-    for data in test_bins:
-        db.add(Bin(**data))
+    db.query(SensorReading).delete()
+    db.query(Bin).delete()
     db.commit()
 
-    return {"status": "seeded", "count": len(test_bins)}
+    demo_bin = Bin(
+        address="Демо-стенд — реальный датчик",
+        lat=51.1801,
+        lng=71.4460,
+        fill_percent=0.0,
+        battery_level=100.0,
+    )
+    db.add(demo_bin)
+    db.commit()
+    db.refresh(demo_bin)
+
+    return {"status": "seeded", "bin_id": demo_bin.id, "count": 1}

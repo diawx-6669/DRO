@@ -22,3 +22,12 @@ export async function generateRoute() {
   const { data } = await axios.post(`${API_BASE}/routes/generate`);
   return data;
 }
+
+export async function sendTelemetry(binId, fillPercent, batteryLevel) {
+  const { data } = await axios.post(`${API_BASE}/bins/telemetry`, {
+    bin_id: binId,
+    fill_percent: fillPercent,
+    battery_level: batteryLevel,
+  });
+  return data;
+}
