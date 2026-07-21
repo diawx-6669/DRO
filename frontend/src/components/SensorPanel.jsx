@@ -14,15 +14,15 @@ export default function SensorPanel({ onClose, onTelemetrySent }) {
   const [distance, setDistance] = useState(null);
   const [fillPercent, setFillPercent] = useState(null);
   const [containerHeight, setContainerHeight] = useState(100);
+  const [inverted, setInverted] = useState(false);
   const [binId, setBinId] = useState(null);
   const [binReady, setBinReady] = useState(false);
 
   const portRef = useRef(null);
   const readerRef = useRef(null);
   const lastSentRef = useRef(0);
+  const closingRef = useRef(false);
 
-  // При открытии окна убеждаемся, что в базе есть тот самый единственный
-  // демо-бак, и запоминаем его id, чтобы слать телеметрию именно туда.
   useEffect(() => {
     (async () => {
       try {
@@ -39,13 +39,48 @@ export default function SensorPanel({ onClose, onTelemetrySent }) {
         console.error("Не удалось подготовить демо-бак:", err);
       }
     })();
+
+    // На случай, если окно закрылось не через кнопку «Закрыть»
+    // (например, размонтировалось иначе) — всё равно освобождаем порт.
+    return () => {
+      releasePort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function releasePort() {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    try {
+      await readerRef.current?.cancel();
+    } catch (err) {
+      // порт мог уже закрыться сам — это нормально
+    }
+    try {
+      await portRef.current?.close();
+    } catch (err) {
+      // тоже нормально, если уже закрыт
+    }
+    readerRef.current = null;
+    portRef.current = null;
+    closingRef.current = false;
+  }
+
+  function computeFillPercent(distanceCm) {
+    const raw = (1 - distanceCm / containerHeight) * 100;
+    const clamped = Math.max(0, Math.min(100, raw));
+    return inverted ? 100 - clamped : clamped;
+  }
 
   async function handleConnect() {
     if (!("serial" in navigator)) {
       setStatus("unsupported");
       return;
     }
+
+    // На всякий случай гарантируем, что предыдущее соединение точно закрыто
+    // перед новым запросом порта — это и убирает необходимость перезагружать страницу.
+    await releasePort();
 
     try {
       const port = await navigator.serial.requestPort();
@@ -77,7 +112,7 @@ export default function SensorPanel({ onClose, onTelemetrySent }) {
           if (num === null) continue;
 
           setDistance(num.toFixed(1));
-          const percent = Math.max(0, Math.min(100, (1 - num / containerHeight) * 100));
+          const percent = computeFillPercent(num);
           setFillPercent(percent);
 
           const now = Date.now();
@@ -90,20 +125,16 @@ export default function SensorPanel({ onClose, onTelemetrySent }) {
         }
       }
 
-      setStatus((s) => (s === "live" ? "error" : s));
+      setStatus((s) => (s === "live" ? "idle" : s));
     } catch (err) {
       console.error(err);
       setStatus("error");
+      await releasePort();
     }
   }
 
   async function handleClose() {
-    try {
-      await readerRef.current?.cancel();
-      await portRef.current?.close();
-    } catch (err) {
-      // порт мог уже закрыться сам — это нормально
-    }
+    await releasePort();
     onClose();
   }
 
@@ -142,6 +173,15 @@ export default function SensorPanel({ onClose, onTelemetrySent }) {
           />
         </label>
 
+        <label className="sensor-modal__field">
+          Инвертировать расчёт
+          <input
+            type="checkbox"
+            checked={inverted}
+            onChange={(e) => setInverted(e.target.checked)}
+          />
+        </label>
+
         <div className="reading">
           <div className="reading__value">
             {fillPercent !== null ? `${Math.round(fillPercent)}%` : "---"}
@@ -170,9 +210,9 @@ export default function SensorPanel({ onClose, onTelemetrySent }) {
         )}
 
         <p className="sensor-modal__hint">
-          Данные отправляются на карту диспетчерской каждые {SEND_INTERVAL_MS / 1000} сек.
-          Плата должна отправлять в Serial одно число на строку
-          (<code>Serial.println(distanceCm)</code>).
+          Если проценты показывают наоборот (пустой — полным, полный — пустым) — включите
+          «Инвертировать расчёт» выше. Данные отправляются на карту диспетчерской каждые{" "}
+          {SEND_INTERVAL_MS / 1000} сек.
         </p>
       </div>
     </div>
