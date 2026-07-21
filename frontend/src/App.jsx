@@ -5,6 +5,7 @@ import SignalStrip from "./components/SignalStrip.jsx";
 import BinList from "./components/BinList.jsx";
 import RoutePanel from "./components/RoutePanel.jsx";
 import DashboardMap from "./components/DashboardMap.jsx";
+import SensorPanel from "./components/SensorPanel.jsx";
 import { fetchBins, seedBins } from "./hooks/useBins.js";
 
 const POLL_INTERVAL_MS = 30000;
@@ -15,6 +16,7 @@ function App() {
   const [selectedId, setSelectedId] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState("pending");
   const [seeding, setSeeding] = useState(false);
+  const [sensorCheckOpen, setSensorCheckOpen] = useState(false);
 
   const loadBins = useCallback(async () => {
     try {
@@ -46,7 +48,7 @@ function App() {
 
   return (
     <div className="app">
-      <Header connectionStatus={connectionStatus} />
+      <Header connectionStatus={connectionStatus} onOpenSensorCheck={() => setSensorCheckOpen(true)} />
       <SignalStrip bins={bins} />
       <div className="app__body">
         <div className="app__map">
@@ -78,6 +80,7 @@ function App() {
           </div>
         </aside>
       </div>
+      {sensorCheckOpen && <SensorPanel onClose={() => setSensorCheckOpen(false)} />}
     </div>
   );
 }

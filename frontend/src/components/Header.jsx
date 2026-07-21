@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function Header({ connectionStatus }) {
+export default function Header({ connectionStatus, onOpenSensorCheck }) {
   const [time, setTime] = useState(() => new Date());
 
   useEffect(() => {
@@ -30,6 +30,25 @@ export default function Header({ connectionStatus }) {
         <span className={`status-dot ${statusMeta.dot}`} />
         <span>{statusMeta.text}</span>
         <span style={{ color: "var(--text-faint)", marginLeft: 4 }}>{timeString}</span>
+        <button
+          type="button"
+          onClick={onOpenSensorCheck}
+          style={{
+            marginLeft: 14,
+            paddingLeft: 14,
+            borderLeft: "1px solid var(--border)",
+            background: "transparent",
+            border: "none",
+            borderLeftWidth: 1,
+            borderLeftStyle: "solid",
+            borderLeftColor: "var(--border)",
+            color: "var(--text-dim)",
+            font: "inherit",
+            cursor: "pointer",
+          }}
+        >
+          Проверка датчика →
+        </button>
       </div>
     </header>
   );
